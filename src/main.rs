@@ -1,5 +1,6 @@
- use num_bigint::{BigInt, Sign, ToBigInt};
-// use num_traits::Pow;
+use num_bigint::{BigInt, Sign, ToBigInt};
+use num_bigfloat::BigFloat;
+use num_traits::cast::ToPrimitive;
 // use std::time::Instant;
 
 fn main() {
@@ -12,8 +13,8 @@ fn main() {
         // let elapsed_time = now.elapsed();
         // println!("{} microsecs", elapsed_time.as_micros());
     // }
+    /*
     let mut big_int: BigInt = ToBigInt::to_bigint(&1).unwrap();
-    let Constant: f64 = 426880.0 * 10005.0_f64.sqrt();
     let q = 2;
     big_int = chud_exponential(q);
     println!("chud_exponential({}) = {}", q, big_int);
@@ -21,7 +22,10 @@ fn main() {
     println!("chud_linear({}) = {}", q, big_int);
     big_int = chud_multinomial(q);
     println!("chud_multinomial({}) = {}", q, big_int);
-    
+    */
+    println!("ThisCalc::Pi = {}", chudnovsky(3));
+    println!("BigFloat::Pi = {}", num_bigfloat::PI);
+
 }
 
 /**
@@ -51,34 +55,30 @@ fn leibniz(n: i128) -> f64 {
  * linear = 545140134q + 13591409
  * pi = C *  exponential / multinomial * linear
  */
-fn chudnovsky(i: i128) -> f64 {
+fn chudnovsky(q: usize) -> BigFloat {
 
     /* overflow problem now */
     // can we utilize u64 up until the bitter end?
-    // let base: BigInt = BigInt::new( Sign::Minus, Vec::from([2,6,2,5,3,7,4,1,2,6,4,0,7,6,8,0,0,0]) );
-/*
-    let base: i128 = -262537412640768000;
-    let C: f64 = 426880.0 * 10005.0_f64.sqrt();
-    let mut multinomial: i128 = 0;
-    let mut linear: i128 = 0;
-    let mut exponential: i128 = 1; // BigInt = BigInt::new( Sign::Plus, Vec::new() );
-    let mut pi: i128 = 0;
-*/
-/*
-    // infinite sum
-    for q in 0..i {
-        exponential = base.pow(i as u32); // Pow::pow( base, i as u32);
-        linear = 545140134 * n + 13591409;
-        multinomial = factorial(6*n) /
-        ( factorial(3*n) * factorial(n).pow(3) );
-        pi += exponential /* as f64 */ / (multinomial * linear); // as f64;
+    let mut pi: BigFloat = BigFloat::new();
+    let C = BigFloat::from_f64( 426880.0 * 10005.0_f64.sqrt() );
+
+    // qfinite sum
+    for i in 0..q {
+
+        let numerator = chud_exponential(i);
+        let denominator = chud_multinomial(i) * chud_linear(i);
+        
+        // HOWTO do this operation and get out an f64?
+        // pi += (numerator / denominator).to_f64().unwrap(); // will this just work?
+        // pi += (numerator % denominator).to_f64().unwrap() / denominator.to_f64().unwrap(); // the rational part
+        
+        pi += BigFloat::from_f64( numerator.to_f64().unwrap() / denominator.to_f64().unwrap() );
     
-        // println!("loop {}: pi = {:.*}", n, 20, pi);
-        println!("pi {}: {}", n, pi);
+        // println!("loop {}: pi = {:.*}", i, 20, pi);
+        // println!("pi {}: {}", i, pi);
     }
-    C * pi as f64
-*/
-    0.0 as f64
+    C * pi
+    // 0.0 as f64
 }
 
 /* linear = 545140134q + 13591409 */
