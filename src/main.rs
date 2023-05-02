@@ -1,6 +1,8 @@
+#![allow(unused)]
 use num_bigint::{BigInt, Sign, ToBigInt};
 use num_bigfloat::BigFloat;
-use num_traits::cast::ToPrimitive;
+use num_rational::BigRational;
+use num_traits::{cast::ToPrimitive, One, Zero};
 // use std::time::Instant;
 
 fn main() {
@@ -23,7 +25,7 @@ fn main() {
     big_int = chud_multinomial(q);
     println!("chud_multinomial({}) = {}", q, big_int);
     */
-    println!("ThisCalc::Pi = {}", chudnovsky(3));
+    println!("ThisCalc::Pi = {}", chudnovsky(18));
     println!("BigFloat::Pi = {}", num_bigfloat::PI);
 
 }
@@ -57,28 +59,47 @@ fn leibniz(n: i128) -> f64 {
  */
 fn chudnovsky(q: usize) -> BigFloat {
 
-    /* overflow problem now */
-    // can we utilize u64 up until the bitter end?
-    let mut pi: BigFloat = BigFloat::new();
     let C = BigFloat::from_f64( 426880.0 * 10005.0_f64.sqrt() );
+    
+    // L_q+1 = L_q + 545140134 where L_0 = 13591409
+    let mut linear = ToBigInt::to_bigint(&13591409).unwrap(); // L_0
+
+    let mut exponential: BigInt = One::one(); // X_0
+    let mut multinomial: BigInt = One::one(); // M_0
+
+    let mut pi_ratio: BigRational = BigRational::new( linear.clone(), One::one() ); // q = 0
+
+    println!("###### iteration[0] ######");
+    println!("exponential: {}", &exponential);
+    println!("multinomial: {}", &multinomial);
+    println!("linear: {}", &linear);
+    println!("denominator: {}", pi_ratio.denom());
+    println!("Pi: {}", BigFloat::from_f64( pi_ratio.denom().to_f64().unwrap() / pi_ratio.numer().to_f64().unwrap() ) * C.clone());
+    println!("###########################\n");
+
 
     // qfinite sum
-    for i in 0..q {
+    for i in 1..=q {
 
-        let numerator = chud_exponential(i);
-        let denominator = chud_multinomial(i) * chud_linear(i);
-        
-        // HOWTO do this operation and get out an f64?
-        // pi += (numerator / denominator).to_f64().unwrap(); // will this just work?
-        // pi += (numerator % denominator).to_f64().unwrap() / denominator.to_f64().unwrap(); // the rational part
-        
-        pi += BigFloat::from_f64( numerator.to_f64().unwrap() / denominator.to_f64().unwrap() );
+        let _12i = 12 * i;
+        multinomial *= ( (_12i + 2) * (_12i + 6) * (_12i + 10) ) / (i+1)^3; // M_i
+        linear += ToBigInt::to_bigint(&545140134).unwrap(); // L_i
+        exponential *= ToBigInt::to_bigint( &(262537412640768000 as u128) ).unwrap() * -1; // X_i
+        let numerator: BigInt = multinomial.clone() * linear.clone();
+
+        pi_ratio += BigRational::new( numerator.clone(), exponential.clone() );
+        println!("###### iteration[{}] ######", i);
+        println!("exponential: {}", &exponential);
+        println!("multinomial: {}", &multinomial);
+        println!("linear: {}", &linear);
+        println!("numerator: {}", &numerator);
+        println!("3 = {}", (pi_ratio.denom() % pi_ratio.numer()) );
+        println!("Pi: {}", BigFloat::from_f64( pi_ratio.denom().to_f64().unwrap() / pi_ratio.numer().to_f64().unwrap() ) * C.clone());
+        println!("###########################\n");
     
-        // println!("loop {}: pi = {:.*}", i, 20, pi);
-        // println!("pi {}: {}", i, pi);
     }
-    C * pi
-    // 0.0 as f64
+    // take the inverse after the sumation
+    BigFloat::from_f64( pi_ratio.denom().to_f64().unwrap() / pi_ratio.numer().to_f64().unwrap() ) * C
 }
 
 /* linear = 545140134q + 13591409 */
@@ -89,6 +110,8 @@ fn chud_linear(q: usize) -> BigInt {
     result_at_q += 13591409;
     result_at_q
 }
+
+
 
 /* exponential = -262537412640768000^q */
 // usize for now since its ran in a forloop
