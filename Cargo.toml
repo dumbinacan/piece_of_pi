@@ -11,3 +11,4 @@ num-bigint = "*"
 num-bigfloat = "*"
 num-traits = "*"
 num-rational = "*"
+time-formatter = {git = "https://github.com/dumbinacan/time-formatter.git"}

@@ -1,7 +1,6 @@
-use piece_of_pi::{
-    calc_pi,
-    format_time::{TimeFormatter, TimeUnit},
-};
+use piece_of_pi::calc_pi;
+use time_formatter::format_time::{TimeFormatter, TimeUnit};
+
 use std::time::{Duration, Instant};
 
 fn main() {
